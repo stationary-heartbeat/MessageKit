@@ -37,7 +37,9 @@ extension NSAttributedString {
             var isPartiallyUnderlined = false
             enumerateAttribute(.underlineStyle,
                                in: fullRange) { value, range, stop in
-                                if fullRange != range {
+                                if let underlineValue = value as? Int,
+                                   NSUnderlineStyle.styleSingle == NSUnderlineStyle(rawValue: underlineValue),
+                                   !NSEqualRanges(fullRange, range) {
                                     isPartiallyUnderlined = true
                                     stop.pointee = true
                                 }
