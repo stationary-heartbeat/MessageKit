@@ -251,10 +251,13 @@ open class MessageSizeCalculator: CellSizeCalculator {
             var isPartiallyUnderlined = false
             attributedText.enumerateAttribute(.underlineStyle,
                                               in: fullRange) { value, range, stop in
-                                                if fullRange != range {
+                                                if let underlineValue = value as? Int,
+                                                    NSUnderlineStyle.single == NSUnderlineStyle(rawValue: underlineValue),
+                                                    !NSEqualRanges(fullRange, range) {
                                                     isPartiallyUnderlined = true
                                                     stop.pointee = true
                                                 }
+
             }
             if isPartiallyUnderlined {
                 let tempMutableCopy = NSMutableAttributedString(attributedString: attributedText)
