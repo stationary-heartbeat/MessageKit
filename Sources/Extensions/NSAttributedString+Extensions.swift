@@ -34,27 +34,20 @@ extension NSAttributedString {
         let adjustedRect: CGRect
         if #available(iOS 13, *) {
             let fullRange = NSRange(0..<length)
-            var isPartiallyUnderlined = false
-            enumerateAttribute(.underlineStyle,
-                               in: fullRange) { value, range, stop in
-                                if let underlineValue = value as? Int,
-                                   NSUnderlineStyle.styleSingle == NSUnderlineStyle(rawValue: underlineValue),
-                                   !NSEqualRanges(fullRange, range) {
-                                    isPartiallyUnderlined = true
-                                    stop.pointee = true
-                                }
+            var isPartiallyAttributed = false
+            enumerateAttributes(in: fullRange) { value, range, stop in
+                if !NSEqualRanges(fullRange, range) {
+                    isPartiallyAttributed = true
+                    stop.pointee = true
+                }
             }
-            if isPartiallyUnderlined {
-                let tempMutableCopy = NSMutableAttributedString(attributedString: self)
-                tempMutableCopy.addAttribute(.underlineStyle, value: NSUnderlineStyle.styleSingle.rawValue, range: fullRange)
-                adjustedRect = tempMutableCopy.boundingRect(with: constraintBox,
-                                                            options: [.usesLineFragmentOrigin, .usesFontLeading],
-                                                            context: nil)
-            } else {
-                adjustedRect = boundingRect(with: constraintBox,
-                                            options: [.usesLineFragmentOrigin, .usesFontLeading],
-                                            context: nil)
+            var options: NSStringDrawingOptions = [.usesLineFragmentOrigin, .usesFontLeading]
+            if isPartiallyAttributed {
+                options.formUnion(NSStringDrawingOptions.usesDeviceMetrics)
             }
+            adjustedRect = boundingRect(with: constraintBox,
+                                        options: options,
+                                        context: nil)
         } else {
             adjustedRect = boundingRect(with: constraintBox,
                                         options: [.usesLineFragmentOrigin, .usesFontLeading],
