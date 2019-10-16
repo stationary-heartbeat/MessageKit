@@ -243,9 +243,37 @@ open class MessageSizeCalculator: CellSizeCalculator {
 
     internal func labelSize(for attributedText: NSAttributedString, considering maxWidth: CGFloat) -> CGSize {
         let constraintBox = CGSize(width: maxWidth, height: .greatestFiniteMagnitude)
-        let rect = attributedText.boundingRect(with: constraintBox, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil).integral
 
-        return rect.size
+        /// Workaround:
+        let adjustedRect: CGRect
+        if #available(iOS 13, *) {
+            let fullRange = NSRange(0..<attributedText.length)
+            var isPartiallyUnderlined = false
+            attributedText.enumerateAttribute(.underlineStyle,
+                                              in: fullRange) { value, range, stop in
+                                                if fullRange != range {
+                                                    isPartiallyUnderlined = true
+                                                    stop.pointee = true
+                                                }
+            }
+            if isPartiallyUnderlined {
+                let tempMutableCopy = NSMutableAttributedString(attributedString: attributedText)
+                tempMutableCopy.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: fullRange)
+                adjustedRect = tempMutableCopy.boundingRect(with: constraintBox,
+                                                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                            context: nil)
+            } else {
+                adjustedRect = attributedText.boundingRect(with: constraintBox,
+                                                           options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                           context: nil)
+            }
+        } else {
+            adjustedRect = attributedText.boundingRect(with: constraintBox,
+                                                       options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                       context: nil)
+        }
+
+        return adjustedRect.size
     }
 }
 
