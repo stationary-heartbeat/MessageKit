@@ -29,8 +29,37 @@ extension NSAttributedString {
     func height(considering width: CGFloat) -> CGFloat {
 
         let constraintBox = CGSize(width: width, height: .greatestFiniteMagnitude)
-        let rect = self.boundingRect(with: constraintBox, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil)
-        return rect.height
+
+        // Workaround for iOS 13 bug:
+        let adjustedRect: CGRect
+        if #available(iOS 13, *) {
+            let fullRange = NSRange(0..<length)
+            var isPartiallyUnderlined = false
+            enumerateAttribute(.underlineStyle,
+                               in: fullRange) { value, range, stop in
+                                if fullRange != range {
+                                    isPartiallyUnderlined = true
+                                    stop.pointee = true
+                                }
+            }
+            if isPartiallyUnderlined {
+                let tempMutableCopy = NSMutableAttributedString(attributedString: self)
+                tempMutableCopy.addAttribute(.underlineStyle, value: NSUnderlineStyle.styleSingle.rawValue, range: fullRange)
+                adjustedRect = tempMutableCopy.boundingRect(with: constraintBox,
+                                                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                            context: nil)
+            } else {
+                adjustedRect = boundingRect(with: constraintBox,
+                                            options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                            context: nil)
+            }
+        } else {
+            adjustedRect = boundingRect(with: constraintBox,
+                                        options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                        context: nil)
+        }
+
+        return adjustedRect.height
 
     }
 
