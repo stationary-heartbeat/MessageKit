@@ -279,8 +279,17 @@ open class MessageSizeCalculator: CellSizeCalculator {
 
     internal func labelSize(for attributedText: NSAttributedString, considering maxWidth: CGFloat) -> CGSize {
         let constraintBox = CGSize(width: maxWidth, height: .greatestFiniteMagnitude)
-        let rect = attributedText.boundingRect(with: constraintBox, options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil).integral
 
+        /// Workaround: Attributed text bounding text is not providing the correct size.
+        /// Using `.string.boundingRect` function with `attributes` parameter to get the correct size.
+        let attributes = attributedText.attributes(at: 0,
+                                                   longestEffectiveRange: nil,
+                                                   in: NSRange(location: 0,
+                                                               length: attributedText.length))
+        let rect = attributedText.string.boundingRect(with: constraintBox,
+                                                      options: [.usesLineFragmentOrigin, .usesFontLeading],
+                                                      attributes: attributes,
+                                                      context: nil).integral
         return rect.size
     }
 }
